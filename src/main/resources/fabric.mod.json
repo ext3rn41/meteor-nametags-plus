@@ -4,7 +4,7 @@
   "version": "${version}",
   "name": "Meteor Nametags+",
   "description": "Meteor addon for prettier nametags.",
-  "authors": ["numbits"],
+  "authors": ["ext3rn41"],
   "contact": {},
 
   "license": "GPL-3.0",
