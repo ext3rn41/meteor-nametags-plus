@@ -515,19 +515,14 @@ public class NametagsPlus extends Module {
     private void onPacketReceive(PacketEvent.Receive event) {
         if (!(event.packet instanceof EntityStatusS2CPacket packet)) return;
         if (mc.world == null) return;
-
-        // 토템 팝 status만 관심 있음
         if (packet.getStatus() != EntityStatuses.USE_TOTEM_OF_UNDYING) return;
 
         Entity entity = packet.getEntity(mc.world);
         if (!(entity instanceof PlayerEntity player)) return;
 
-        // 자기 자신은 빼고싶으면 이 조건 유지
         if (player == mc.player) return;
 
         UUID id = player.getUuid();
-
-        // 0 -> -1 -> -2 -> ... 계속 깎음
         totemPops.merge(id, -1, Integer::sum);
     }
 
