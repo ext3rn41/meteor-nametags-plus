@@ -10,7 +10,6 @@ import meteordevelopment.meteorclient.events.world.TickEvent;
 import meteordevelopment.meteorclient.renderer.Renderer2D;
 import meteordevelopment.meteorclient.renderer.text.TextRenderer;
 import meteordevelopment.meteorclient.settings.*;
-import meteordevelopment.meteorclient.systems.config.Config;
 import meteordevelopment.meteorclient.systems.friends.Friends;
 import meteordevelopment.meteorclient.systems.modules.Categories;
 import meteordevelopment.meteorclient.systems.modules.Module;
@@ -207,7 +206,6 @@ public class NametagsPlus extends Module {
             .visible(displayTotemPops::get)
             .build()
     );
-
      */
 
     private final Setting<Double> itemSpacing = sgPlayers.add(new DoubleSetting.Builder()
@@ -402,15 +400,14 @@ public class NametagsPlus extends Module {
     }
 
 
-
     @EventHandler
     private void onTick(TickEvent.Post ev) {
         entityList.clear();
 
         boolean freecamNotActive = !Modules.get().isActive(Freecam.class);
-        boolean notThidPerson = mc.options.getPerspective().isFirstPerson() || !ignoreSelf.get();
+        boolean notThirdPerson = mc.options.getPerspective().isFirstPerson() || !ignoreSelf.get();
 
-        Vec3d cameraPos = mc.gameRenderer.getCamera().getPos();
+        Vec3d cameraPos = mc.gameRenderer.getCamera().getCameraPos();
 
         Set<UUID> seenPlayers = new HashSet<>();
 
@@ -425,7 +422,7 @@ public class NametagsPlus extends Module {
                 seenPlayers.add(p.getUuid());
 
                 // 필터링
-                if ((ignoreSelf.get() || (freecamNotActive && notThidPerson)) && entity == mc.player) continue;
+                if ((ignoreSelf.get() || (freecamNotActive && notThirdPerson)) && entity == mc.player) continue;
                 if (EntityUtils.getGameMode(p) == null && ignoreBots.get()) continue;
                 if (Friends.get().isFriend(p) && ignoreFriends.get()) continue;
             }
@@ -515,6 +512,7 @@ public class NametagsPlus extends Module {
     private void onPacketReceive(PacketEvent.Receive event) {
         if (!(event.packet instanceof EntityStatusS2CPacket packet)) return;
         if (mc.world == null) return;
+
         if (packet.getStatus() != EntityStatuses.USE_TOTEM_OF_UNDYING) return;
 
         Entity entity = packet.getEntity(mc.world);
@@ -523,6 +521,7 @@ public class NametagsPlus extends Module {
         if (player == mc.player) return;
 
         UUID id = player.getUuid();
+
         totemPops.merge(id, -1, Integer::sum);
     }
 
@@ -547,7 +546,7 @@ public class NametagsPlus extends Module {
 
         String name;
         Color nameColor = PlayerUtils.getPlayerColor(player, this.nameColor.get());
-        if (player == mc.player) name = Modules.get().get(NameProtect.class).getName(player.getName().getString());
+        if (player == mc.player) name = Objects.requireNonNull(Modules.get().get(NameProtect.class)).getName(player.getName().getString());
         else name = player.getName().getString();
 
         float absorption = player.getAbsorptionAmount();
@@ -567,7 +566,7 @@ public class NametagsPlus extends Module {
         else if (healthPercentage <= 0.666) healthColor = AMBER;
         else                                healthColor = GREEN;
 
-        // 시진핑
+        // 핑
         int ping = EntityUtils.getPing(player);
         String pingText;
         if (displayPingBrackets.get()) pingText = "[" + ping + "ms]";
@@ -735,7 +734,7 @@ public class NametagsPlus extends Module {
                     text.end();
                 }
 
-                // 인첸트
+                // 인챈트
                 if (maxEnchantCount > 0 && displayEnchants.get()) {
                     text.begin(0.5 * enchantTextScale.get(), false, true);
 
