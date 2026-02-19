@@ -3,7 +3,7 @@
 Meteor addon for prettier and more informative nametags.  
 Extends the default Meteor `Nametags` module with custom text layout, distance-based scaling, item/enchant rendering, and a totem pop counter.
 
-> License : GPL-3.0
+> License: GPL-3.0
 
 ---
 
