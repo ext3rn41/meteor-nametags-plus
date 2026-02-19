@@ -46,6 +46,8 @@ import org.joml.Vector3d;
 
 import java.util.*;
 
+import static dev.ext3rn41.meteornametagsplus.utils.ItemUtil.getItem;
+
 public class NametagsPlus extends Module {
 
     private final Map<UUID, Integer> totemPops = new HashMap<>();
@@ -54,6 +56,12 @@ public class NametagsPlus extends Module {
     private final SettingGroup sgPlayers = settings.createGroup("Players");
     private final SettingGroup sgItems = settings.createGroup("Items");
     private final SettingGroup sgRender = settings.createGroup("Render");
+
+    public enum Durability {
+        None,
+        Total,
+        Percentage
+    }
 
     private final Setting<Set<EntityType<?>>> entities = sgGeneral.add(new EntityTypeListSetting.Builder()
             .name("entities")
@@ -458,54 +466,27 @@ public class NametagsPlus extends Module {
 
             if (type == EntityType.PLAYER) {
                 renderNametagPlayer(event, (PlayerEntity) entity, shadow);
-
             }
             else if (type == EntityType.ITEM) {
                 renderNametagItem(((ItemEntity) entity).getStack(), shadow);
-
             }
             else if (type == EntityType.ITEM_FRAME || type == EntityType.GLOW_ITEM_FRAME) {
                 renderNametagItem(((ItemFrameEntity) entity).getHeldItemStack(), shadow);
-
             }
             else if (type == EntityType.TNT) {
                 renderTntNametag(ticksToTime(((TntEntity) entity).getFuse()), shadow);
-
             }
             else if (type == EntityType.TNT_MINECART && ((TntMinecartEntity) entity).isPrimed()) {
                 renderTntNametag(ticksToTime(((TntMinecartEntity) entity).getFuseTicks()), shadow);
-
             }
             else if (entity instanceof LivingEntity living) {
                 renderGenericLivingNametag(living, shadow);
 
             }
-
             else {
                 renderGenericNametag(entity, shadow);
             }
         }
-    }
-
-    private int getRenderCount() {
-        int count = culling.get() ? maxCullCount.get() : entityList.size();
-        count = MathHelper.clamp(count, 0, entityList.size());
-
-        return count;
-    }
-
-    @Override
-    public String getInfoString() {
-        return Integer.toString(getRenderCount());
-    }
-
-    private double getHeight(Entity entity) {
-        double height = entity.getEyeHeight(entity.getPose());
-
-        if (entity.getType() == EntityType.ITEM || entity.getType() == EntityType.ITEM_FRAME || entity.getType() == EntityType.GLOW_ITEM_FRAME) height += 0.2;
-        else height += 0.5;
-
-        return height;
     }
 
     @EventHandler
@@ -787,6 +768,46 @@ public class NametagsPlus extends Module {
         NametagUtils.end(event.drawContext);
     }
 
+    private int getRenderCount() {
+        int count = culling.get() ? maxCullCount.get() : entityList.size();
+        count = MathHelper.clamp(count, 0, entityList.size());
+
+        return count;
+    }
+
+    @Override
+    public String getInfoString() {
+        return Integer.toString(getRenderCount());
+    }
+
+    private double getHeight(Entity entity) {
+        double height = entity.getEyeHeight(entity.getPose());
+
+        if (entity.getType() == EntityType.ITEM || entity.getType() == EntityType.ITEM_FRAME || entity.getType() == EntityType.GLOW_ITEM_FRAME) height += 0.2;
+        else height += 0.5;
+
+        return height;
+    }
+
+    private double getScaleFor(Entity entity) {
+        double dist = PlayerUtils.distanceToCamera(entity);
+
+        double minDist = 0.9;
+        double maxDist = 40.0;
+
+        double t = (dist - minDist) / (maxDist - minDist);
+        t = MathHelper.clamp(t, 0.0, 1.0);
+
+        return MathHelper.lerp(t, maxScale.get(), minScale.get());
+    }
+
+
+    private void drawBg(double x, double y, double width, double height) {
+        Renderer2D.COLOR.begin();
+        Renderer2D.COLOR.quad(x, y, width, height, background.get());
+        Renderer2D.COLOR.render();
+    }
+
     private void renderNametagItem(ItemStack stack, boolean shadow) {
         if (stack.isEmpty()) return;
 
@@ -896,41 +917,5 @@ public class NametagsPlus extends Module {
         text.end();
 
         NametagUtils.end();
-    }
-
-    private ItemStack getItem(PlayerEntity entity, int index) {
-        return switch (index) {
-            case 0 -> entity.getMainHandStack();
-            case 1 -> entity.getEquippedStack(EquipmentSlot.HEAD);
-            case 2 -> entity.getEquippedStack(EquipmentSlot.CHEST);
-            case 3 -> entity.getEquippedStack(EquipmentSlot.LEGS);
-            case 4 -> entity.getEquippedStack(EquipmentSlot.FEET);
-            case 5 -> entity.getOffHandStack();
-            default -> ItemStack.EMPTY;
-        };
-    }
-
-    private void drawBg(double x, double y, double width, double height) {
-        Renderer2D.COLOR.begin();
-        Renderer2D.COLOR.quad(x, y, width, height, background.get());
-        Renderer2D.COLOR.render();
-    }
-
-    private double getScaleFor(Entity entity) {
-        double dist = PlayerUtils.distanceToCamera(entity);
-
-        double minDist = 0.9;
-        double maxDist = 40.0;
-
-        double t = (dist - minDist) / (maxDist - minDist);
-        t = MathHelper.clamp(t, 0.0, 1.0);
-
-        return MathHelper.lerp(t, maxScale.get(), minScale.get());
-    }
-
-    public enum Durability {
-        None,
-        Total,
-        Percentage
     }
 }
